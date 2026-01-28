@@ -63,6 +63,30 @@ const Settings: React.FC<{ subscription: UserSubscription }> = ({ subscription }
     <div className="p-8 max-w-4xl mx-auto pb-24">
       <h1 className="text-3xl font-bold text-slate-900 mb-8 tracking-tight">System Configuration</h1>
 
+            {/* Account Information */}
+      <section className="mb-8">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <span>👤</span> Account Information
+          </h2>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between py-2 border-b border-slate-100">
+              <span className="text-sm font-semibold text-slate-600">Email</span>
+              <span className="text-sm text-slate-900 font-mono">{user?.email || 'Not available'}</span>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-slate-100">
+              <span className="text-sm font-semibold text-slate-600">Display Name</span>
+              <span className="text-sm text-slate-900">{user?.name || user?.email?.split('@')[0] || 'User'}</span>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm font-semibold text-slate-600">User ID</span>
+              <span className="text-sm text-slate-900 font-mono text-xs">{user?.id || 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] p-8 text-white mb-12 shadow-xl shadow-blue-500/20 flex items-center justify-between">
          <div className="max-w-md">
             <h2 className="text-xl font-black mb-2 flex items-center gap-2">
