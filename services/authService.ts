@@ -1,33 +1,60 @@
-
-// Removed AuthIdentity from import as it is not exported by types.ts
+// Google OAuth Authentication Service
 import { User } from '../types';
+
+interface GoogleCredentialResponse {
+  credential: string;
+  select_by: string;
+}
 
 class AuthService {
   private currentUser: User | null = null;
   private token: string | null = null;
 
+  // Initialize from localStorage on app start
+  constructor() {
+    this.loadSession();
+  }
+
   async login(provider: 'google' | 'github' | 'microsoft'): Promise<User> {
-    // Simulate OAuth Redirect & Callback
-    console.log(`Initiating ${provider} OAuth...`);
-    
-    // Mock user returned from provider
-    const mockUser: User = {
-      id: `u_${Math.random().toString(36).substr(2, 9)}`,
-      email: `user@example.com`,
-      displayName: `Nexus User (${provider})`,
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}`,
-      createdAt: new Date()
-    };
+    if (provider === 'google') {
+      // For Google OAuth, this will be handled by GoogleOAuthProvider in App.tsx
+      // This method will be called after successful OAuth callback
+      console.log('Google OAuth initiated via GoogleOAuthProvider');
+      return Promise.reject(new Error('Use GoogleOAuthProvider login flow'));
+    }
 
-    this.currentUser = mockUser;
-    this.token = this.generateMockJWT(mockUser.id);
-    
-    localStorage.setItem('nexus_session', JSON.stringify({
-      user: mockUser,
-      token: this.token
-    }));
+    // For other providers, implement similar OAuth flows
+    console.log(`${provider} OAuth not yet implemented`);
+    return Promise.reject(new Error(`${provider} OAuth not yet implemented`));
+  }
 
-    return mockUser;
+  // Handle Google OAuth credential response
+  async handleGoogleLogin(credentialResponse: GoogleCredentialResponse): Promise<User> {
+    try {
+      // Decode the JWT token from Google
+      const credential = credentialResponse.credential;
+      const payload = this.decodeJWT(credential);
+
+      // Create user from Google profile
+      const user: User = {
+        id: payload.sub,
+        email: payload.email,
+        displayName: payload.name,
+        avatarUrl: payload.picture,
+        createdAt: new Date()
+      };
+
+      this.currentUser = user;
+      this.token = credential;
+
+      // Save session
+      this.saveSession(user, credential);
+
+      return user;
+    } catch (error) {
+      console.error('Google login error:', error);
+      throw error;
+    }
   }
 
   async logout() {
@@ -37,30 +64,51 @@ class AuthService {
   }
 
   getCurrentUser(): User | null {
-    if (!this.currentUser) {
-      const saved = localStorage.getItem('nexus_session');
-      if (saved) {
-        const { user, token } = JSON.parse(saved);
-        this.currentUser = user;
-        this.token = token;
-      }
-    }
     return this.currentUser;
   }
 
   isAuthenticated(): boolean {
-    return !!this.token;
+    return !!this.token && !!this.currentUser;
   }
 
-  private generateMockJWT(userId: string): string {
-    // In a real app, this happens on the server.
-    const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-    const payload = btoa(JSON.stringify({
-      sub: userId,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + (15 * 60) // 15 mins
+  getToken(): string | null {
+    return this.token;
+  }
+
+  private saveSession(user: User, token: string): void {
+    localStorage.setItem('nexus_session', JSON.stringify({
+      user,
+      token,
+      timestamp: new Date().toISOString()
     }));
-    return `${header}.${payload}.signature_mock`;
+  }
+
+  private loadSession(): void {
+    const saved = localStorage.getItem('nexus_session');
+    if (saved) {
+      try {
+        const { user, token } = JSON.parse(saved);
+        this.currentUser = user;
+        this.token = token;
+      } catch (error) {
+        console.error('Failed to load session:', error);
+        localStorage.removeItem('nexus_session');
+      }
+    }
+  }
+
+  private decodeJWT(token: string): any {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error('JWT decode error:', error);
+      throw new Error('Invalid JWT token');
+    }
   }
 }
 
