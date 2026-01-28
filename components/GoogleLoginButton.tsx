@@ -36,6 +36,8 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ onSuccess, onErro
         onSuccess={handleSuccess}
         onError={handleError}
         useOneTap
+        ux_mode="popup"
+        prompt="select_account"
         theme="filled_blue"
         size="large"
         text="signin_with"
