@@ -1,0 +1,8 @@
+{
+  "name": "Nexus - AI Chief of Staff",
+  "description": "A multi-agent personal productivity system with specialized personas for executive management, research, and workflow automation.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
